@@ -28,6 +28,7 @@
 #include <linux/spinlock.h>
 #include <linux/swiotlb.h>
 #include <linux/vmalloc.h>
+#include <trace/hooks/iommu.h>
 
 #include "dma-iommu.h"
 
@@ -578,6 +579,9 @@ static int iommu_dma_init_domain(struct iommu_domain *domain, dma_addr_t base,
 	}
 
 	init_iova_domain(iovad, 1UL << order, base_pfn);
+
+	trace_android_rvh_iommu_iovad_init_alloc_algo(dev, iovad);
+
 	ret = iova_domain_init_rcaches(iovad);
 	if (ret)
 		goto done_unlock;
@@ -609,6 +613,10 @@ static int dma_info_to_prot(enum dma_data_direction dir, bool coherent,
 
 	if (attrs & DMA_ATTR_PRIVILEGED)
 		prot |= IOMMU_PRIV;
+	if (attrs & DMA_ATTR_SYS_CACHE)
+		prot |= IOMMU_SYS_CACHE;
+	if (attrs & DMA_ATTR_SYS_CACHE_NWA)
+		prot |= IOMMU_SYS_CACHE_NWA;
 
 	switch (dir) {
 	case DMA_BIDIRECTIONAL:
@@ -651,6 +659,8 @@ static dma_addr_t iommu_dma_alloc_iova(struct iommu_domain *domain,
 		iova = alloc_iova_fast(iovad, iova_len, dma_limit >> shift,
 				       true);
 
+	trace_android_vh_iommu_iovad_alloc_iova(dev, iovad, (dma_addr_t)iova << shift, size);
+
 	return (dma_addr_t)iova << shift;
 }
 
@@ -669,6 +679,8 @@ static void iommu_dma_free_iova(struct iommu_dma_cookie *cookie,
 	else
 		free_iova_fast(iovad, iova_pfn(iovad, iova),
 				size >> iova_shift(iovad));
+
+	trace_android_vh_iommu_iovad_free_iova(iovad, iova, size);
 }
 
 static void __iommu_dma_unmap(struct device *dev, dma_addr_t dma_addr,

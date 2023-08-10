@@ -83,6 +83,7 @@ irqreturn_t dw_handle_msi_irq(struct dw_pcie_rp *pp)
 
 	return ret;
 }
+EXPORT_SYMBOL_GPL(dw_handle_msi_irq);
 
 /* Chained MSI interrupt service routine */
 static void dw_chained_msi_isr(struct irq_desc *desc)
@@ -478,14 +479,19 @@ int dw_pcie_host_init(struct dw_pcie_rp *pp)
 	if (ret)
 		goto err_free_msi;
 
-	if (!dw_pcie_link_up(pci)) {
+	if (dw_pcie_link_up(pci)) {
+		dw_pcie_print_link_status(pci);
+	} else {
 		ret = dw_pcie_start_link(pci);
 		if (ret)
 			goto err_free_msi;
-	}
 
-	/* Ignore errors, the link may come up later */
-	dw_pcie_wait_for_link(pci);
+		if (pci->ops && pci->ops->start_link) {
+			ret = dw_pcie_wait_for_link(pci);
+			if (ret)
+				goto err_stop_link;
+		}
+	}
 
 	bridge->sysdata = pp;
 
