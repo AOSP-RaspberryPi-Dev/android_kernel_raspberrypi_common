@@ -252,6 +252,7 @@ dtbo-$(CONFIG_ARCH_BCM2835) += \
 	tinylcd35.dtbo \
 	tpm-slb9670.dtbo \
 	tpm-slb9673.dtbo \
+	u-boot-nulldev-serial.dtbo \
 	uart0.dtbo \
 	uart1.dtbo \
 	uart2.dtbo \

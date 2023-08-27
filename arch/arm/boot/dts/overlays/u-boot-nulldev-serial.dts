@@ -1,0 +1,22 @@
+/dts-v1/;
+/plugin/;
+
+/{
+	compatible = "brcm,bcm2835";
+
+	fragment@0 {
+		target-path = "/soc";
+		__overlay__ {
+			serial@nulldev {
+				compatible = "nulldev-serial";
+			};
+		};
+	};
+
+	fragment@1 {
+		target-path = "/aliases";
+		__overlay__ {
+			serial0 = "/soc/serial@nulldev";
+		};
+	};
+};
